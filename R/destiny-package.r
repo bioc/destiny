@@ -5,10 +5,9 @@
 #' @examples
 #' demo(destiny, ask = FALSE)
 #' 
-#' @docType package
 #' @name destiny
 #' 
 ## Make sure Rcpp and RcppEigen are loaded
 #' @importFrom Rcpp evalCpp
 #' @importFrom RcppEigen RcppEigen.package.skeleton
-NULL
+"_PACKAGE"

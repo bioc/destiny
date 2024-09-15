@@ -127,9 +127,9 @@ gms[-1] %>% map(~ .$ids[1:10]) %>% purrr::reduce(intersect) %>% cat(sep = ' ')
 ```
 
 ```{r}
-httr::GET('https://www.uniprot.org/uniprot/', query = list(
+httr::GET('https://rest.uniprot.org/uniprotkb/search', query = list(
     columns = 'id,genes,comment(TISSUE SPECIFICITY)',
-    format = 'tab',
-    query = rowData(allen)$Uniprot[gms$cosine$ids[1:6]] %>% unlist() %>% paste(collapse = ' or ')
-)) %>% httr::content(type = 'text/tab-separated-values', encoding = 'utf-8', )
+    format = 'tsv',
+    query = rowData(allen)$Uniprot[gms$cosine$ids[1:6]] %>% unlist() %>% paste(collapse = ' OR ')
+)) %>% httr::content(type = 'text/tab-separated-values', encoding = 'utf-8')
 ```
