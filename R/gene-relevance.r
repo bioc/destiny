@@ -2,9 +2,9 @@
 NULL
 
 #' Gene relevances for entire data set
-#' 
+#'
 #' The relevance map is cached insided of the \code{\link{DiffusionMap}}.
-#' 
+#'
 #' @param coords           A \code{\link{DiffusionMap}} object or a cells \eqn{\times} dims \code{\link{matrix}}.
 #' @param exprs            An cells \eqn{\times} genes \code{\link{matrix}}. Only provide if \code{coords} is no \code{\link{DiffusionMap}}.
 #' @param ...              Unused. All parameters to the right of the \code{...} have to be specified by name.
@@ -19,9 +19,9 @@ NULL
 #' @param knn_params       A \code{\link{list}} of parameters for \code{\link{find_knn}}.
 #' @param weights          Weights for the partial derivatives. A vector of the same length as \code{dims}.
 #' @param verbose          If TRUE, log additional info to the console
-#' 
+#'
 #' @return A \code{GeneRelevance} object:
-#' 
+#'
 #' @slot coords         A cells \eqn{\times} dims \code{\link{matrix}} or \code{\link[Matrix:sparseMatrix-class]{sparseMatrix}}
 #'                      of coordinates (e.g. diffusion components), reduced to the dimensions passed as \code{dims}
 #' @slot exprs          A cells \eqn{\times} genes matrix of expressions
@@ -33,18 +33,18 @@ NULL
 #' @slot distance       Distance measure used in the nearest neighbor search. See \code{\link{find_knn}}
 #' @slot smooth_window  Smoothing window used (see \code{\link[smoother]{smth.gaussian}})
 #' @slot smooth_alpha   Smoothing kernel width used (see \code{\link[smoother]{smth.gaussian}})
-#' 
+#'
 #' @seealso \link{Gene Relevance methods}, \link{Gene Relevance plotting}: \code{plot_differential_map}/\code{plot_gene_relevance}
-#' 
+#'
 #' @examples
 #' data(guo_norm)
 #' dm <- DiffusionMap(guo_norm)
 #' gr <- gene_relevance(dm)
-#' 
+#'
 #' m <- t(Biobase::exprs(guo_norm))
 #' gr_pca <- gene_relevance(prcomp(m)$x, m)
 #' # now plot them!
-#' 
+#'
 #' @rdname Gene-Relevance
 #' @export
 setClass('GeneRelevance', slots = c(
@@ -52,7 +52,7 @@ setClass('GeneRelevance', slots = c(
 	exprs = 'dMatrixOrMatrix',
 	partials = 'array',
 	partials_norm = 'matrix',
-	nn_index = 'matrix',  # k = ncol(nn_index)
+	nn_index = 'matrix',  # Derived `k = ncol(nn_index)`
 	dims = 'ColIndex',
 	distance = 'character',
 	smooth_window = 'numeric',
@@ -60,7 +60,7 @@ setClass('GeneRelevance', slots = c(
 
 #' @rdname Gene-Relevance
 #' @export
-setGeneric('gene_relevance', function(
+setGeneric('gene_relevance', function( # nolint: brace_linter.
 	coords, exprs, ...,
 	k = 20L, dims = 1:2, distance = NULL, smooth = TRUE, remove_outliers = FALSE, verbose = FALSE
 ) standardGeneric('gene_relevance'))
@@ -68,7 +68,7 @@ setGeneric('gene_relevance', function(
 #' @importFrom Biobase updateObject
 #' @rdname Gene-Relevance
 #' @export
-setMethod('gene_relevance', c('DiffusionMap', 'missing'), function(
+setMethod('gene_relevance', c('DiffusionMap', 'missing'), function( # nolint: cyclocomp_linter.
 	coords, exprs, ..., k,
 	dims, distance, smooth, remove_outliers, verbose
 ) {
@@ -87,14 +87,16 @@ setMethod('gene_relevance', c('DiffusionMap', 'missing'), function(
 		pcs <- get_pca(exprs, dataset(dm), dm@n_pcs, verbose)
 		weights <- eigenvalues(dm)[dims]
 		if (is.null(distance)) distance <- dm@distance
-		else if (!identical(distance, dm@distance)) stop('the specified distance ', distance,' is not the same as the one used for the diffusion map: ', dm@distance)
+		else if (!identical(distance, dm@distance)) stop('the specified distance ', distance, ' is not the same as the one used for the diffusion map: ', dm@distance)
 		relevance_map <- gene_relevance(
 			coords, exprs, ...,
 			k = k, dims = dims, distance = distance, smooth = smooth, remove_outliers = remove_outliers, verbose = verbose,
 			pcs = pcs, knn_params = dm@knn_params, weights = weights
 		)
 		dm@data_env$relevance_map <- relevance_map
-	} else chkDots(...)
+	} else {
+		chkDots(...)
+	}
 	relevance_map
 })
 
@@ -114,12 +116,12 @@ setMethod('gene_relevance', c('matrix', 'dMatrixOrMatrix'), function(
 	n_dims <- ncol(coords_used)
 	if (length(weights) == 1L) weights <- rep(weights, n_dims)
 	smooth <- get_smoothing(smooth)
-	
+
 	if (is.null(colnames(exprs))) stop('The expression matrix columns need to be named but are NULL')
 	if (n_dims != length(weights)) stop(n_dims, ' dimensions, but ', length(weights), ' weights were provided')
-	
+
 	nn_index <- do.call(find_knn, c(list(if (is.null(pcs)) exprs else pcs, k, distance = distance), knn_params))$index
-	
+
 	k <- ncol(nn_index)
 	n_cells <- nrow(coords_used)
 	n_genes <- ncol(exprs)
@@ -127,7 +129,7 @@ setMethod('gene_relevance', c('matrix', 'dMatrixOrMatrix'), function(
 		NA,
 		dim = c(n_cells, n_genes, n_dims),
 		dimnames = list(rownames(exprs), colnames(exprs), if (is.character(dims)) dims else colnames(coords_used)))
-	
+
 	# a very small value to subtract from the differential
 	values <- if (is(exprs, 'Matrix')) exprs@x else exprs
 	small <- min(values[values != 0]) / (length(exprs) - nnzero(exprs))
@@ -139,23 +141,23 @@ setMethod('gene_relevance', c('matrix', 'dMatrixOrMatrix'), function(
 		expr_masked[expr_masked == 0] <- small
 		differential_expr <- apply(nn_index, 2, function(nn) expr_gene[nn] - expr_masked)
 		differential_expr[differential_expr == 0] <- NA  # Cannot evaluate partial
-		#stopifnot(identical(dim(differential_expr), c(n_cells, k)))
+		#assert stopifnot(identical(dim(differential_expr), c(n_cells, k)))
 		differential_expr
 	}
 	differential_exprs <- apply(exprs, 2L, gene_differential)
-	#stopifnot(identical(dim(differential_exprs), c(n_cells * k, n_genes)))
+	#assert stopifnot(identical(dim(differential_exprs), c(n_cells * k, n_genes)))
 	# apply only handles returning vectors, so we have to reshape the return value
 	dim(differential_exprs) <- c(n_cells, k, n_genes)
 	dimnames(differential_exprs)[[3L]] <- if (length(colnames(exprs)) > 1L) colnames(exprs) else list(colnames(exprs))
-	#stopifnot(identical(gene_differential(exprs[, 1L]), differential_exprs[, , 1L]))
-	
+	#assert stopifnot(identical(gene_differential(exprs[, 1L]), differential_exprs[, , 1L]))
+
 	for (d in seq_len(n_dims)) {
 		# Compute partial derivatives in direction of current dimension
-		
+
 		if (verbose) cat('Calculating partial derivatives of dimension ', d, '/', n_dims, '\n')
 		# We could optionaly add normalization by max(coords_used[, d]) - min(coords_used[, d])
 		differential_coord <- apply(nn_index, 2L, function(nn) coords_used[nn, d] - coords_used[, d])
-		
+
 		partials_unweighted <- apply(differential_exprs, 3L, function(grad_gene_exprs) {
 			# Compute median of difference quotients to NN
 			difference_quotients <- grad_gene_exprs / differential_coord
@@ -164,7 +166,7 @@ setMethod('gene_relevance', c('matrix', 'dMatrixOrMatrix'), function(
 			ifelse(stable_cells, rowMedians(difference_quotients, na.rm = TRUE), NA)
 		})
 		colnames(partials_unweighted) <- colnames(exprs)
-		
+
 		if (!any(is.na(smooth))) {
 			order_coor <- order(coords_used[, d])
 			order_orig <- order(order_coor)
@@ -176,21 +178,21 @@ setMethod('gene_relevance', c('matrix', 'dMatrixOrMatrix'), function(
 			})
 			colnames(partials_unweighted) <- colnames(exprs)
 		}
-		
+
 		partials[, , d] <- weights[[d]] * partials_unweighted
 	}
-	
+
 	# Compute norm over partial derivates: Frobenius
 	partials_norm <- apply(partials, c(1, 2), function(z) sqrt(sum(z^2, na.rm = TRUE)))
 	colnames(partials_norm) <- colnames(partials)
-	
+
 	# Find outlier cells: Not in NN of more than 1 other cell
 	# Remove these as they tend to receive very large norms
 	if (remove_outliers) {
 		outliers <- sapply(seq_len(n_cells), function(cell) sum(nn_index == cell) > 1)
 		partials_norm[, outliers] <- NA
 	}
-	
+
 	# Prepare output
 	rownames(partials_norm) <- rownames(partials)
 	colnames(partials_norm) <- colnames(partials)
