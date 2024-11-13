@@ -168,16 +168,15 @@ plot3d(
     type = 's', radius = .01)
 view3d(theta = 10, phi = 30, zoom = .8)
 # now use your mouse to rotate the plot in the window
-rgl.close()
+close3d()
 ```
 
 For the popular `ggplot2` package, there is built in support in the form of a `fortify.DiffusionMap` method, which allows to use DiffusionMap objects as `data` parameter in the `ggplot` and `qplot` functions. But the regular `plot` function already returns a `ggplot` object anyway.
 
 ```{r}
 library(ggplot2)
-qplot(DC1, DC2, data = dm, colour = factor(num_cells)) +
-    scale_color_cube_helix()
-# or alternatively: ggplot(dif, aes(DC1, DC2, colour = factor(num.cells))) + ...
+ggplot(dm, aes(DC1, DC2, colour = factor(num_cells))) +
+    geom_point() + scale_color_cube_helix()
 ```
 
 As aesthetics, all diffusion components, gene expressions, and annotations are available. If you plan to make many plots, create a `data.frame` first by using `as.data.frame(dif)` or `fortify(dif)`, assign it to a variable name, and use it for plotting.
@@ -195,8 +194,8 @@ Dimensions `dims`
 Diffusion maps consist of the eigenvectors (which we refer to as diffusion components) and corresponding eigenvalues of the diffusion distance matrix. The latter indicate the diffusion components’ importance, i.e. how well the eigenvectors approximate the data. The eigenvectors are decreasingly meaningful.
 
 ```{r}
-qplot(y = eigenvalues(dm)) + theme_minimal() +
-    labs(x = 'Diffusion component (DC)', y = 'Eigenvalue')
+ggplot(NULL, aes(x = seq_along(eigenvalues(dm)), y = eigenvalues(dm))) + theme_minimal() +
+    geom_point() + labs(x = 'Diffusion component (DC)', y = 'Eigenvalue')
 ```
 
 The later DCs often become noisy and less useful:

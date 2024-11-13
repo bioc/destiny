@@ -18,9 +18,7 @@ inline double censor_pair(
 	bool use_d;
 	const bool
 		one_uncertain = (c == thr) || (d == thr),
-		one_missing = NumericVector::is_na(c) || NumericVector::is_na(d),
-		one_of_each_invalid = one_uncertain && one_missing,
-		both_valid = !one_uncertain && !one_missing;
+		one_missing = NumericVector::is_na(c) || NumericVector::is_na(d);
 	
 	/*
 	Rcout << "one uncertain=" << one_uncertain << " one missing=" << one_missing
@@ -45,36 +43,34 @@ inline double censor_pair(
 	// 3. (missing-uncertain): interference of two different box functions
 	// 4. (invalid×2): two missing or two uncertain => 1
 	
-	if (both_valid) { //1
+	if (!one_uncertain && !one_missing) { //1
 		return exp(-pow(c-d, 2) / (kt*2));
-	} else { //at least one invalid
-		if (one_of_each_invalid) { //3
-			const double uncertain_range = uncertain1 - uncertain0 + 2*sigma;
-			return uncertain_range / (sqrt(uncertain_range) * sqrt(missing1 - missing0));
-		} else if (one_uncertain || one_missing) { //2
-			double m0, m1;
-			if (one_uncertain && !one_missing) {
-				m0  = uncertain0;
-				m1  = uncertain1;
-				use_d = c == thr;
-			} else if (!one_uncertain && one_missing) {
-				m0  = missing0;
-				m1  = missing1;
-				use_d = NumericVector::is_na(c);
-			}
-			
-			const double v = use_d ? d : c;
-			
-			return
-				pow(M_PI*kt/2, -1./4)
-				* sqrt(M_PI*kt/4)
-				* ( std::erfc((m0-v) / sigma) - std::erfc((m1-v) / sigma) )
-				/ sqrt(m1-m0);
-			
-			//Rcout << "m0=" << m0 << " m1=" << m1 << " use d=" << use_d << " x=" << x << " v=" << v << '\n';
-		} else {// both are uncertain or both are missing => x *= 1 => noop
-			return 1;
+	} else if (one_uncertain && one_missing) { //3
+		const double uncertain_range = uncertain1 - uncertain0 + 2*sigma;
+		return uncertain_range / (sqrt(uncertain_range) * sqrt(missing1 - missing0));
+	} else if (one_uncertain || one_missing) { //2
+		double m0, m1;
+		if (one_uncertain && !one_missing) {
+			m0  = uncertain0;
+			m1  = uncertain1;
+			use_d = c == thr;
+		} else if (!one_uncertain && one_missing) {
+			m0  = missing0;
+			m1  = missing1;
+			use_d = NumericVector::is_na(c);
 		}
+		
+		const double v = use_d ? d : c;
+		
+		return
+			pow(M_PI*kt/2, -1./4)
+			* sqrt(M_PI*kt/4)
+			* ( std::erfc((m0-v) / sigma) - std::erfc((m1-v) / sigma) )
+			/ sqrt(m1-m0);
+		
+		//Rcout << "m0=" << m0 << " m1=" << m1 << " use d=" << use_d << " x=" << x << " v=" << v << '\n';
+	} else {// both are uncertain or both are missing => x *= 1 => noop
+		return 1;
 	}
 }
 

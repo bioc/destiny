@@ -36,17 +36,17 @@ validate_censoring <- function(data, sigma, dists, censor_val, censor_range, mis
 		stop('You have to provide both a censoring value and a censor_range or none')
 
 	if (!is.null(censor_range)) {
-		if (!is.numeric(censor_val) || (length(censor_val) != 1L && length(censor_val) != g))
-		stop('censor_val has to be a single numeric value, or length(censor_val) == ncol(data) must be TRUE')
+		if (!is.numeric(censor_val) || !(length(censor_val) %in% c(g, 1L)))
+			stop('censor_val has to be a single numeric value, or length(censor_val) == ncol(data) must be TRUE')
 
 		if (!is.numeric(censor_range) || !(nrow(censor_range) %in% c(g, 1L)) || ncol(censor_range) != 2L || any(diff(t(censor_range)) <= 0L))
-		stop('censor_range has to be a numeric vector of length 2, the second of which being larger,
+			stop('censor_range has to be a numeric vector of length 2, the second of which being larger,
 				 or a matrix with nrow(censor_range) == ncol(data) where each row is such a vector')
 	}
 
 	if (!is.null(missing_range)) {
 		if (!is.numeric(missing_range) || !(nrow(missing_range) %in% c(g, 1L)) || ncol(missing_range) != 2L || any(diff(t(missing_range)) <= 0L))
-		stop('missing_range has to be a numeric vector of length 2, the second of which being larger,
+			stop('missing_range has to be a numeric vector of length 2, the second of which being larger,
 				 or a matrix with nrow(missing_range) == ncol(data) where each row is such a vector')
 	}
 
