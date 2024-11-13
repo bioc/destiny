@@ -93,9 +93,11 @@ Eigen::SparseMatrix<double> censoring_impl(
 		no_uncertain = Rf_isNull(uncertain_or_null),
 		no_missing = Rf_isNull(missing_or_null);
 	
-	NumericVector thr_v       = (no_threshold) ? NumericVector(0)    : NumericVector(thr_or_null);
-	NumericMatrix uncertain_m = (no_uncertain) ? NumericMatrix(0, 2) : NumericMatrix(uncertain_or_null);
-	NumericMatrix missing_m   = (no_missing)   ? NumericMatrix(0, 2) : NumericMatrix(missing_or_null);
+	NumericVector thr_v       = (no_threshold) ? NumericVector(1)    : NumericVector(thr_or_null);
+	NumericMatrix uncertain_m = (no_uncertain) ? NumericMatrix(1, 2) : NumericMatrix(uncertain_or_null);
+	NumericMatrix missing_m   = (no_missing)   ? NumericMatrix(1, 2) : NumericMatrix(missing_or_null);
+	
+	//Rcout << "thr_v=" << thr_v << " uncertain_m=" << uncertain_m << " missing_m=" << missing_m << '\n';
 	
 	typedef Eigen::SparseMatrix<double> M;
 	M trans_p(dists);
@@ -108,9 +110,10 @@ Eigen::SparseMatrix<double> censoring_impl(
 		const double
 			sigma = (local_sigma) ? sigmas[idx_major] : sigmas[0],
 			kt    = (local_sigma) ?    kts[idx_major] :    kts[0];
+
+		//Rcout << "sigma=" << sigma << ", kt=" << kt << '\n';
 		
 		for (M::InnerIterator it(trans_p, idx_major); it; ++it) {
-			//Rcout << "i=" << row_idx << ", j=" << nn_idx << '\n';
 			int idx_minor = it.index();
 			 
 			double x = 1.;
@@ -120,12 +123,17 @@ Eigen::SparseMatrix<double> censoring_impl(
 					c = data(idx_major, g),
 					d = data(idx_minor, g),
 					thr = (thr_v.size() == G) ? thr_v[g] : thr_v[0];
+
+				//Rcout << "c=" << c << ", d=" << d << ", thr=" << thr << '\n';
 				
 				const double
 					uncertain0 = ((uncertain_m.nrow() == G) ? uncertain_m(g, 0) : uncertain_m(0, 0)) - sigma,
 					uncertain1 = ((uncertain_m.nrow() == G) ? uncertain_m(g, 1) : uncertain_m(0, 1)) + sigma,
 					missing0 = ((missing_m.nrow() == G) ? missing_m(g, 0) : missing_m(0, 0)) - sigma,
 					missing1 = ((missing_m.nrow() == G) ? missing_m(g, 1) : missing_m(0, 1)) + sigma;
+
+				//Rcout << "uncertain=" << uncertain0 << ", " << uncertain1 << '\n';
+				//Rcout << "missing=" << missing0 << ", " << missing1 << '\n';
 					
 				x *= censor_pair(c, d, sigma, kt, thr, uncertain0, uncertain1, missing0, missing1);
 				
