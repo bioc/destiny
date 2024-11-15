@@ -122,7 +122,7 @@ cowplot::plot_grid(plotlist = gms, nrow = 1)
 As you can see, despite the quite different embedding, the rankcor and Cosine diffusion Maps display a number of the same driving genes.
 
 ```{r}
-gms[-1] %>% map(~ .$ids[1:10]) %>% purrr::reduce(intersect) %>% cat(sep = ' ')
+gms[-1] %>% map(~ .$ids[1:10]) %>% purrr::reduce(base::intersect) %>% cat(sep = ' ')
 ```
 
 ```{r}
