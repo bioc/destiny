@@ -126,10 +126,13 @@ gms[-1] %>% map(~ .$ids[1:10]) %>% purrr::reduce(base::intersect) %>% cat(sep = 
 ```
 
 ```{r}
-httr::GET('https://rest.uniprot.org/uniprotkb/search', query = list(
-    fields = 'accession,gene_names,cc_tissue_specificity',
-    format = 'tsv',
-    query = rowData(allen)$Uniprot[gms$cosine$ids[1:6]] %>% unlist() %>% paste(collapse = ' OR ')
-)) %>%
-    httr::content(type = 'text/tab-separated-values', encoding = 'utf-8')
+options(readr.show_col_types = FALSE)
+tryCatch({
+    httr::GET('https://rest.uniprot.org/uniprotkb/search', query = list(
+        fields = 'accession,gene_names,cc_tissue_specificity',
+        format = 'tsv',
+        query = rowData(allen)$Uniprot[gms$cosine$ids[1:6]] %>% unlist() %>% paste(collapse = ' OR ')
+    )) %>%
+        httr::content(type = 'text/tab-separated-values', encoding = 'utf-8')
+}, error = function(e) e)
 ```
