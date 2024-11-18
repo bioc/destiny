@@ -4,10 +4,10 @@
 \alias{eig_decomp}
 \title{Fast eigen decomposition using \code{\link[RSpectra]{eigs}}}
 \usage{
-eig_decomp(M, n_eigs, sym, ..., opts = list())
+eig_decomp(m, n_eigs, sym, ..., opts = list())
 }
 \arguments{
-\item{M}{A matrix (e.g. from the Matrix package) or
+\item{m}{A matrix (e.g. from the Matrix package) or
 a function (see \code{\link[RSpectra]{eigs}}).}
 
 \item{n_eigs}{Number of eigenvectors to return.}
